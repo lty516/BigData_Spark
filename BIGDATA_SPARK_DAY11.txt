@@ -1,0 +1,68 @@
+	3) Zeppelin : 노트북 서비스 
+		spark : 2.1, zeppelin : 0.7  
+		- 프로그램 다운로드 0.7버전
+			https://zeppelin.apache.org/ > http://www.apache.org/dyn/closer.cgi/zeppelin/zeppelin-0.7.3/zeppelin-0.7.3-bin-all.tgz
+		- 스파크 2.1버전 다운 : 
+			https://archive.apache.org/dist/spark/spark-2.1.3/ > spark-2.1.3-bin-hadoop2.7.tgz   
+		- 리눅스로 전송 후 압축풀고 이름은 zeppelin으로 변경		
+			tar zxvf zeppelin...
+			mv zeppelin... zeppelin
+			rm zeppelin... 
+		- 환경변수 설정
+			gedit /etc/profile
+			-------------------
+			export ZEPPELIH_HOME=/root/zeppelin
+			export PATH=$PATH:$ZEPPELIN_HOME/bin
+			--------------------
+			source /etc/profile
+			reboot
+		- zeppelin 환경 설정
+			cd $ZEPPELIN_HOME/conf
+			cp zeppelin-site.xml.tamplate zeppelin-site.xml
+
+			gedit zeppelin-site.xml
+			------------------------
+			서버 ip 192.168.10.10
+			포트번호 8080 >7777로 변경
+			------------------------	
+			
+			gedit zeppelin-env.sh 도 이름 변경해서 열기
+			-------------------------  * 주석지우고 작성
+			export JAVA_HOME=$JAVA_HOME
+			export MASTER=spark://master:7077
+			export SPARK_HOME=/root/spark
+			-------------------------
+		-서버 실행
+			start-master.sh
+			start-slave.sh spark://master:7077 -m-512m -c 1
+			zeppelin-daemon.sh start
+		- VirtualBox master 설정 네트워크 포트포워딩 ip:192.168.10.1 port:7777 ip: 192.168.10.10 port: 7777
+			>윈도우에서 192.168.10.1:7777 접속
+		- 새로운 노트 만들기 mynote / spark
+			sc  > 실행시 오류가 날시  spark2.1버전 재설치
+			tar zxvf spark-2.xxxxxxxxxxxx  
+			mv spark-2.xxxx spark
+			rm spark-2.xxxxx.tar
+
+	4) 클라우드 사용법
+		- Databricks
+			https://community.cloud.databricks.com 
+			회원가입 후 Clusters 클릭 create cluster : mycluster
+			libararies > install New > Maven(Java) >search Package > graphframes select > install
+					> PYPI(python) > pandas
+					CRAN (R)
+			home에서 New Notebook : mynote / python
+				sc   > shift enter로 실행
+				spark
+				value = "spark"
+				print("이것은 {} 입니다.".format(value)"
+		- MS Asure HDinsight
+
+(8) 스파크 데이터 관리 
+	1) RDD
+		- 저수준 API
+	2) DataFrame
+		- 고수준 API
+	3) DataSet
+		- 고수준 API
+	
