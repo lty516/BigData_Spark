@@ -1,0 +1,98 @@
+(8) 스파크 데이터 관리 
+	1) RDD
+		- 저수준 API
+		- 특징 : Immutable, Partitioned Colletions of Record
+			ⅰ) 여러 분산 노드에 나누어짐
+			ⅱ) 다수의 파티션으로 관리됨
+			ⅲ) 변경이 불가능한 데이터 셋
+		- Lazy Evaluation : RDD를 제어하는 연산 타입
+			- Transformation
+				map(), filter(), flatmap(), sample(), groupByKey(), reduceByKey(), sort(), ...
+			- Aciton
+		- 함수 위주의 연산
+		-schemaless
+		---------------------------------------------------------------------------------------------------
+		%scala	- 언어 선택 
+		
+		val a = List("spark", "rdd", "example", "sample", "example")
+		a
+
+		val b = sc.parallelize(List("spark", "rdd", "example", "sample", "example"),3)
+		b
+
+		val c = sc.makeRDD(List("spark", "rdd", "example", "sample", "example"))
+		//c
+	
+		val d = sc.makeRDD(0 to 1000000000)
+		d.count()
+			
+		//val e = b.map(x >= (x,1))
+		val e = b.map((_,1))
+		val e = b.map(b.map(b >= (b, b.length))
+		e.collection()
+		
+		val nums = sc.parallelize(List(2, 1, 4, 3)
+		nums.max()
+		nums.min()
+		nums.sum()
+
+		val number = sc.parallelize(10 to 50 by 10)
+		number.take(5)
+
+		val numsq = number.map(num => num*num)
+		numsq.take(5)
+
+		val numrv = numsq.map(num => num.toString.reverse)
+		numrv.take(5)
+
+		- wordcount
+			val data = sc.textFile("/FileStore/tables/RandomString.txt")
+			data.take(100)
+			
+			val datakv = data.map(word => (word,1))
+			datakv.take(10)
+	
+			val dataresult = datakv.reduceByKey(_ + _)
+			dataresult.take(10)
+
+			dataresult.saveAsTextFile("/FileStore/tables/RandomStringResult.txt")
+			------------------------------------------------------------------------			
+			%python (기본값이기 때문에 필요없음)
+			text_file = sc.textFile("/FileStore/tables/RandomStringResult.txt")
+			counts = text_file.map(lambda word : (word,1)).reduceByKey(lambda a, b : a+b)
+			counts.take(10)
+			counts.saveAsTextFile("/root/sparkex/RandomStringResult.txt")
+
+	2) DataFrame
+		- 고수준 API
+		- Schema 존재
+		- UDF를 지원
+		- RDD를 DataFrame으로 변환
+			튜플
+			case case
+			creatDataFrame()
+			-------------------------------------------------------------------
+			a) 튜플을 이용한 방법
+				val data = sc.textfile(" /FileStore/tables/italianPosts.csv")
+				data.take(10)
+	
+				val datasplit = data,map(_.split("~")
+				datasplit.take(10)
+
+				val datardd = datasplit.mpa(x +> (x(0),x(1),x(2),x(3),x(4),x(5),x(6),x(7),x(8),x(9),x(10),x(11))
+				datardd.take(10)
+
+				val df = datardd.toDF()
+				df.show()
+			
+				df.printSchema()
+
+				val datadf = datardd.toDF("commentCount", "lastActivityDate", "ownerUserID", "body", "score", "creationDate", "viewCount", "title", "tags", "answerCount", "acceptedAnswerId", "postTypeId", "id")
+				datadf.show()
+
+	3) DataSet
+		- 고수준 API
+		- java, scala
+(9) 스파크 사용 방법
+	1) 대화형(인터프린터)
+	2) 응용 프로그램
