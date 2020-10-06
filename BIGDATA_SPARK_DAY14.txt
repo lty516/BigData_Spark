@@ -1,0 +1,100 @@
+
+			# 비행 거리가 0인 기록들을 조회
+			us_carrier_df.filter(col('distinct') == 0).show()
+			
+			# 1987년과 1993년의 전체 운항 노선 수는 어떠한가?
+			line_distinct_1987_df = us_carrier_df.filter(col('Year')==1987).select('Origin','Dest').distinct()
+			#line_distinct_1987_df.show()
+			line_distinct_1987_df.orderBy('Origin','Dest').show()
+			
+			#항공사 별로 얼마나 많은 도착기록이 있는가?
+			from pyspark.sql.functions import desc
+
+			dest_by_arrival_df = us_carrier_df.groupby("Dest").count()
+			#dest_by_arrival_df.show()
+			#dest_by_arrival_df.orderBy("Dest").show()
+			dest_by_arrival_df.orderBy(desc("count")).show()
+			spark.sql("SELECT Dest, count(*) FROM global_temp.us_carrier GROUP BY Dest ORDER BY DEST").show()
+			
+			##### 평균적으로 실제 비행시간과 예상 비행시간이 가장 크게 차이가 나는 노선은 어디인가? #####
+			#노선별로 실제 비행시간의 평균 구하기
+			actual_elapsed_df = us_carrier_df.groupBy('Origin"','Dest').mean('ActualElapsedTime')
+			actual_elapsed_df .show()
+			
+			# 노선별로 예상 비행시간의 평균 구하기
+			expected_elapsed_df = us_carrier_df.groupBy("Origin", "Dest").min("CRSElapsedTime")
+			expected_elapsed_df.show()
+			
+			#두 결과를 join
+			joined_df = actual_elapsed_df.join(expected_elapsed_df,(actual_elapsed_df['Origin']==expected_elapsed_df['Origin']) & (actual_elapsed_df['Dest']==expected_elapsed_df['Dest']))
+			joined_df.show()
+			
+			joined_aligned_df = joined_df.select(actual_elapsed_df['Origin'], actual_elapsed_df['Dest'],'avg(ActualElapsedTime)','avg(CRSElapsedTime)')
+			
+			joined_aligned_df.show()
+			
+			# 실제 비행 시간과 예상 시간의 차이
+			from pyspark.sql.functions import abs
+			diff_df = joined_aligned_df.select('Origin', 'Dest', abs(col('avg(ActualElapsedTime)') - col('CRSElapsedTime')))     
+			diff_df.orderBy(desc("abs((avg(ActualElapsedTime) - CRSElapsedTime))")).show()
+			
+			diff_df.select('Origin', 'Dest', col('abs((avg(ActualElapsedTime) - CRSElapsedTime))').alias("difference")).orderBy(desc('difference')).show()	
+				
+
+			##### 각 공항별로 다른 공항으로 향하는 운항수는 몇%인가? #####
+
+			# 공항별로 출발 운항 수 구하기
+			count_per_origin_df = us_carrier_df.groupBy("Origin").count().select("Origin", col("count").alias("total")).orderBy("Origin")
+			count_per_origin_df.show()
+			
+			# 두 결과 합치기
+			joined_df = count_per_origin_df.join(count_per_origin_dest_df, count_per_origin_df["Origin"]==count_per_origin_dest_df["Origin"]).drop(count_per_origin_df["Origin"])
+			# joined_df.show()
+
+			joined_reorder_df = joined_df.select("Origin", "Dest", "count", "total").orderBy("Origin","Dest")
+			joined_reorder_df.show()
+
+
+			# 백분율 계산
+			from pyspark.sql.functions import round
+			origin_to_dest_rate_df = joined_reorder_df.select("Origin","Dest", round((col("count")/col("total")*100), 2).alias("rate"))
+			origin_to_dest_rate_df.show()
+
+			##### 해당 공항에서 출발 도착을 모두 하는 항공사는 얼마나 있을까? #####
+
+			# 공항별로 출발 항공편을 운행하는 항공사 구하기
+			from pyspark.sql.functions import collect_list
+			
+			depart_carriers = us_carrier_df.select("Origin","UniqueCarrier").distinct().groupBy("Origin").agg(collect_list("UniqueCarrier").alias("departs"))
+			depart_carriers.show()
+
+			# 공항별로 도착 항공편을 운행하는 항공사 구하기
+			from pyspark.sql.functions import collect_list
+			
+			arrival_carriers = us_carrier_df.select("Dest","UniqueCarrier").distinct().groupBy("Dest").agg(collect_list("UniqueCarrier").alias("arrivals"))
+			arrival_carriers.show()
+
+			# 두 결과 합치기
+			departs_arrivals_df = depart_carriers.join(arrival_carriers, depart_carriers["Origin"]==arrival_carriers["Dest"]).select(col("Origin").alias("airport"),"departs","arrivals")
+			departs_arrivals_df.show()
+
+			from pyspark.sql.functions import array_intersect, array_except
+			departs_arrivals_both = departs_arrivals_df.withColumn("both", array_intersect("departs","arrivals"))\
+			                              .withColumn("arrival_only", array_except("arrivals","departs"))\
+			                              .withColumn("depart_only", array_except("departs","arrivals"))\
+			                              .drop("departs").drop("arrivals")
+			departs_arrivals_both.show()
+			
+			from pyspark.sql.functions import size
+			departs_arrivals_both.filter((size(departs_arrivals_both["arrival_only"]) > 0) | (size(departs_arrivals_both["depart_only"]) > 0)).show()
+
+			
+
+
+	3) DataSet
+		- 고수준 API
+		- java, scalar
+
+(9) 스파크 사용 방법
+	1) 대화형
+	2) 응용 프로그램
