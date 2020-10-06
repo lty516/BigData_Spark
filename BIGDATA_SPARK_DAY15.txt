@@ -1,0 +1,16 @@
+
+(9) 스파크 사용 방법
+	1) 대화형
+	2) 응용 프로그램
+		spark-submit --master local[4] sampleApp.py
+		spark-submit --master spark://master:7077 sampleApp.py
+		
+		sc객체 생성
+		-------------------------------
+		from pyspark import SparkContext, SparkConf
+	
+		conf = SparkConf().setAppName("Spark Count")
+		sc = SparkContext(conf=conf)
+
+(10) 스파크 스트리밍
+	spark-submit /root/source/network-wordcount.py
